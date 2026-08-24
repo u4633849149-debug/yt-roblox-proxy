@@ -5,7 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CHANNEL_ID = 'UC6fnWNbHioiwZwf5OiTAaUA';
 
-app.get('/api/subscribers', async (req, res) => {
+async function fetchSubscribers(res) {
   try {
     const url = `https://www.youtube.com/channel/${CHANNEL_ID}`;
     const response = await axios.get(url, {
@@ -15,26 +15,27 @@ app.get('/api/subscribers', async (req, res) => {
       }
     });
 
-    // Sucht nach der ungerundeten Abonnentenzahl im HTML-Quelltext
     const match = response.data.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/);
 
     if (match && match[1]) {
-      // Extrahiert nur die Zahlen aus dem Treffer (z.B. "11.379" -> 11379)
       const rawCount = match[1].replace(/[^0-9]/g, '');
       return res.json({ exactSubscribers: parseInt(rawCount, 10) });
     }
 
-    // Fallback: Direkte Suche im Seiten-Header
     const fallbackMatch = response.data.match(/"subscriberCountText":\{"simpleText":"([^"]+)"/);
     if (fallbackMatch && fallbackMatch[1]) {
-      return res.json({ subscribersText: fallbackMatch[1] });
+      return res.json({ exactSubscribers: fallbackMatch[1] });
     }
 
-    res.status(404).json({ error: 'Zahl konnte im HTML nicht gefunden werden' });
+    res.status(404).json({ error: 'Zahl im HTML nicht gefunden' });
   } catch (error) {
-    res.status(500).json({ error: 'Fehler beim Abrufen der YouTube-Daten', details: error.message });
+    res.status(500).json({ error: 'Fehler beim Abrufen', details: error.message });
   }
-});
+}
+
+-- Beide Pfade abdecken:
+app.get('/', (req, res) => fetchSubscribers(res));
+app.get('/api/subscribers', (req, res) => fetchSubscribers(res));
 
 app.listen(PORT, () => {
   console.log(`Proxy läuft auf Port ${PORT}`);
