@@ -3,33 +3,22 @@ const axios = require('axios');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+const API_KEY = 'AIzaSyBlaSk6w2-G7nl7jN9PrgnCXOYsNxnGjr4';
 const CHANNEL_ID = 'UC6fnWNbHioiwZwf5OiTAaUA';
 
 async function fetchSubscribers(res) {
   try {
-    const url = `https://www.youtube.com/channel/${CHANNEL_ID}`;
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9'
-      }
-    });
+    const url = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${CHANNEL_ID}&key=${API_KEY}`;
+    const response = await axios.get(url);
 
-    const match = response.data.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/);
-
-    if (match && match[1]) {
-      const rawCount = match[1].replace(/[^0-9]/g, '');
-      return res.json({ exactSubscribers: parseInt(rawCount, 10) });
+    if (response.data.items && response.data.items.length > 0) {
+      const subscriberCount = response.data.items[0].statistics.subscriberCount;
+      return res.json({ exactSubscribers: subscriberCount });
     }
 
-    const fallbackMatch = response.data.match(/"subscriberCountText":\{"simpleText":"([^"]+)"/);
-    if (fallbackMatch && fallbackMatch[1]) {
-      return res.json({ exactSubscribers: fallbackMatch[1] });
-    }
-
-    res.status(404).json({ error: 'Zahl im HTML nicht gefunden' });
+    res.status(404).json({ error: 'Kanal nicht gefunden' });
   } catch (error) {
-    res.status(500).json({ error: 'Fehler beim Abrufen', details: error.message });
+    res.status(500).json({ error: 'Fehler beim Abrufen der YouTube-Daten', details: error.message });
   }
 }
 
