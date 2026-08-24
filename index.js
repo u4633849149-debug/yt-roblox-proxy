@@ -33,7 +33,7 @@ async function fetchSubscribers(res) {
   }
 }
 
--- Beide Pfade abdecken:
+// Beide Pfade abdecken:
 app.get('/', (req, res) => fetchSubscribers(res));
 app.get('/api/subscribers', (req, res) => fetchSubscribers(res));
 
