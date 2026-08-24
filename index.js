@@ -13,7 +13,7 @@ async function fetchSubscribers(res) {
 
     if (response.data.items && response.data.items.length > 0) {
       const subscriberCount = response.data.items[0].statistics.subscriberCount;
-      return res.json({ exactSubscribers: subscriberCount });
+      return res.json({ exactSubscribers: parseInt(subscriberCount, 10) });
     }
 
     res.status(404).json({ error: 'Kanal nicht gefunden' });
@@ -22,7 +22,7 @@ async function fetchSubscribers(res) {
   }
 }
 
-// Beide Pfade abdecken:
+// Stellt beide Pfade bereit
 app.get('/', (req, res) => fetchSubscribers(res));
 app.get('/api/subscribers', (req, res) => fetchSubscribers(res));
 
